@@ -23,6 +23,10 @@ A modern full-stack hostel management suite with dedicated **resident** and **ad
   - React 19 + React Router 6
   - Axios-based API client
   - Responsive, card-based UI with reusable design tokens
+- **Data Validation**
+  - Database triggers prevent negative costs and fees
+  - Comprehensive input validation on frontend and backend
+  - Real-time error feedback and user-friendly messages
 
 ## Tech Stack
 
@@ -114,19 +118,31 @@ The frontend will run on `http://localhost:3000`
 
 The backend automatically provisions the required schema if it does not exist:
 
-1. `hostels`
-2. `mess_plans`
-3. `residents`
-4. `rooms`
-5. `allotments`
-6. `roommate_preferences`
-7. `maintenance_requests`
-8. `laundry_services`
-9. `payments`
-10. `bills`
-11. `visitor_logs`
-12. `access_cards`
-13. `mess_plan_assignments` (helper)
+### Core Entities
+1. `hostels` - Hostel information with fees, location, and contact details
+2. `mess_plans` - Meal plan options with pricing and descriptions
+3. `residents` - Resident personal information and preferences
+4. `rooms` - Room details with capacity and hostel association
+5. `allotments` - Room allocation records for residents
+6. `roommate_preferences` - Resident roommate matching preferences
+
+### Services & Facilities
+7. `maintenance_requests` - Resident complaint and service requests
+8. `laundry_services` - Laundry service bookings and tracking
+9. `visitor_logs` - Security tracking of hostel visitors
+10. `access_cards` - Digital access card management
+
+### Financial Management
+11. `payments` - Payment transaction records
+12. `bills` - Monthly billing with rent and additional charges
+13. `mess_plan_assignments` - Links residents to mess plans over time
+
+### Database Triggers
+- `check_mess_plan_cost_insert/update` - Prevents negative mess plan costs
+- `check_hostel_fees_insert/update` - Prevents negative hostel fees
+
+### Pre-seeded Data
+The system automatically seeds 11 hostels with various fees and locations across Indian cities.
 
 ## Usage
 
@@ -135,6 +151,31 @@ The backend automatically provisions the required schema if it does not exist:
 3. `cd client && npm start`
 4. Visit `http://localhost:3000`
 5. Log in as:
-   - **Resident:** use an existing resident’s ID/email/contact number
+   - **Resident:** use an existing resident's ID/email/contact number
    - **Admin:** default `admin@hostel.com / admin123` (update via env `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Triggers Error**: If you see "Mess Plan Cost cannot be negative" or "Hostel fees cannot be negative", the database triggers are working correctly - ensure all costs and fees are positive values.
+
+2. **Database Connection Error**: Ensure MySQL is running and credentials in `server/.env` are correct.
+
+3. **Port Already in Use**: Kill processes using ports 3000 (frontend) or 5000 (backend).
+
+4. **Module Not Found**: Run `npm install` in both `client` and `server` directories.
+
+5. **Resident Login Issues**: Residents must be created by an admin first before they can log in.
+
+### Database Reset
+
+If you need to reset the database:
+```bash
+cd server
+# Stop the server first
+mysql -u root -pMeetshah@1801 -e "DROP DATABASE hostel_management;"
+# Restart server to recreate tables and triggers
+npm start
+```
 
