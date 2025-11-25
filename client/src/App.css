@@ -305,6 +305,36 @@ tr:hover {
   color: #553c9a;
 }
 
+.badge-pending {
+  background-color: #feebc8;
+  color: #7c2d12;
+}
+
+.badge-paid {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.badge-overdue {
+  background-color: #fed7d7;
+  color: #742a2a;
+}
+
+.badge-resolved {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.badge-in-progress {
+  background-color: #bee3f8;
+  color: #2c5282;
+}
+
+.badge-requested {
+  background-color: #faf089;
+  color: #744210;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
@@ -376,4 +406,110 @@ tr:hover {
   th, td {
     padding: 0.5rem;
   }
+}
+
+/* Utility */
+.muted {
+  color: #718096;
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.timeline {
+  list-style: none;
+  padding-left: 0;
+}
+
+.timeline li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.timeline-title {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1rem;
+  margin-left: 1rem;
+  cursor: pointer;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: radial-gradient(circle, #eef2ff, #f5f7fa);
+}
+
+.login-card {
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.toggle-group {
+  display: flex;
+  border: 1px solid #cbd5f5;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.simple-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 1rem;
+}
+
+.simple-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #edf2f7;
 }

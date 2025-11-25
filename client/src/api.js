@@ -9,31 +9,51 @@ const api = axios.create({
   },
 });
 
-// Students API
-export const studentsAPI = {
-  getAll: () => api.get('/students'),
-  getById: (id) => api.get(`/students/${id}`),
-  create: (data) => api.post('/students', data),
-  update: (id, data) => api.put(`/students/${id}`, data),
-  delete: (id) => api.delete(`/students/${id}`),
+export const authAPI = {
+  residentLogin: (payload) => api.post('/auth/resident', payload),
+  adminLogin: (payload) => api.post('/auth/admin', payload),
 };
 
-// Rooms API
-export const roomsAPI = {
-  getAll: () => api.get('/rooms'),
-  getById: (id) => api.get(`/rooms/${id}`),
-  create: (data) => api.post('/rooms', data),
-  update: (id, data) => api.put(`/rooms/${id}`, data),
-  delete: (id) => api.delete(`/rooms/${id}`),
+export const residentPortalAPI = {
+  getDashboard: (residentId) => api.get(`/resident-portal/${residentId}/dashboard`),
+  createMaintenance: (residentId, data) => api.post(`/resident-portal/${residentId}/maintenance`, data),
+  createLaundry: (residentId, data) => api.post(`/resident-portal/${residentId}/laundry`, data),
 };
 
-// Allocations API
-export const allocationsAPI = {
-  getAll: () => api.get('/allocations'),
-  getById: (id) => api.get(`/allocations/${id}`),
-  create: (data) => api.post('/allocations', data),
-  update: (id, data) => api.put(`/allocations/${id}`, data),
-  delete: (id) => api.delete(`/allocations/${id}`),
+export const adminAPI = {
+  residents: {
+    getAll: () => api.get('/residents'),
+    create: (data) => api.post('/residents', data),
+    update: (id, data) => api.put(`/residents/${id}`, data),
+    delete: (id) => api.delete(`/residents/${id}`),
+  },
+  hostels: {
+    getAll: () => api.get('/hostels'),
+  },
+  rooms: {
+    getAll: () => api.get('/rooms'),
+    create: (data) => api.post('/rooms', data),
+  },
+  allotments: {
+    getAll: () => api.get('/allotments'),
+    create: (data) => api.post('/allotments', data),
+  },
+  messPlans: {
+    getAll: () => api.get('/mess-plans'),
+    create: (data) => api.post('/mess-plans', data),
+    update: (id, data) => api.put(`/mess-plans/${id}`, data),
+    delete: (id) => api.delete(`/mess-plans/${id}`),
+  },
+  bills: {
+    getAll: () => api.get('/bills'),
+    create: (data) => api.post('/bills', data),
+  },
+  maintenance: {
+    getAll: () => api.get('/maintenance'),
+  },
+  laundry: {
+    getAll: () => api.get('/laundry'),
+  },
 };
 
 export default api;

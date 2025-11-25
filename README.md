@@ -1,13 +1,28 @@
 # Hostel Management System
 
-A simple and modern hostel management system with CRUD operations for managing students, rooms, and room allocations.
+A modern full-stack hostel management suite with dedicated **resident** and **admin** portals, multi-hostel support, and complete CRUD coverage across 12 core operational tables.
 
 ## Features
 
-- **Student Management**: Add, edit, delete, and view students
-- **Room Management**: Manage hostel rooms with capacity tracking
-- **Room Allocations**: Allocate rooms to students and track allocations
-- **Modern UI**: Clean and responsive design
+- **Resident Portal**
+  - Login with Resident ID / email / contact
+  - View personal info, mess plan, hostel & room details
+  - Track recent bills, maintenance tickets, laundry history
+  - Raise maintenance complaints and laundry requests
+- **Admin Portal**
+  - Secure admin login
+  - Dashboards for residents, rooms, maintenance queue, billing
+  - Add residents, rooms, bills, mess plans, and manage all master tables
+  - Visibility over all maintenance, laundry, visitor logs, access cards (API ready)
+- **Backend**
+  - Node.js + Express REST API
+  - MySQL schema auto-initialised with 12 tables (Residents, Rooms, Hostels, Allotments, Preferences, Mess Plans, Maintenance, Laundry, Payments, Bills, Visitor Logs, Access Cards) plus helper tables
+  - Dedicated resident dashboard API aggregating cross-table data
+  - Admin CRUD endpoints for every entity
+- **Frontend**
+  - React 19 + React Router 6
+  - Axios-based API client
+  - Responsive, card-based UI with reusable design tokens
 
 ## Tech Stack
 
@@ -72,40 +87,54 @@ The frontend will run on `http://localhost:3000`
 
 ## API Endpoints
 
-### Students
-- `GET /api/students` - Get all students
-- `GET /api/students/:id` - Get student by ID
-- `POST /api/students` - Create new student
-- `PUT /api/students/:id` - Update student
-- `DELETE /api/students/:id` - Delete student
+### Authentication
+- `POST /api/auth/resident` – Resident login (identifier = email/contact/resident_id)
+- `POST /api/auth/admin` – Admin login (defaults: `admin@hostel.com` / `admin123`, configurable via env)
 
-### Rooms
-- `GET /api/rooms` - Get all rooms
-- `GET /api/rooms/:id` - Get room by ID
-- `POST /api/rooms` - Create new room
-- `PUT /api/rooms/:id` - Update room
-- `DELETE /api/rooms/:id` - Delete room
+### Resident Portal
+- `GET /api/resident-portal/:id/dashboard` – Aggregated resident info (personal, room, bills, maintenance, laundry)
+- `POST /api/resident-portal/:id/maintenance` – Raise complaint
+- `POST /api/resident-portal/:id/laundry` – Add laundry request
 
-### Allocations
-- `GET /api/allocations` - Get all allocations
-- `GET /api/allocations/:id` - Get allocation by ID
-- `POST /api/allocations` - Create new allocation
-- `PUT /api/allocations/:id` - Update allocation
-- `DELETE /api/allocations/:id` - Delete allocation
+### Core CRUD (selection)
+- `GET|POST|PUT|DELETE /api/residents`
+- `GET|POST|PUT|DELETE /api/hostels`
+- `GET|POST|PUT|DELETE /api/rooms`
+- `GET|POST|PUT|DELETE /api/allotments`
+- `GET|POST|PUT|DELETE /api/mess-plans`
+- `GET|POST|PUT|DELETE /api/bills`
+- `GET|POST|PUT|DELETE /api/payments`
+- `GET|POST|PUT|DELETE /api/maintenance`
+- `GET|POST|PUT|DELETE /api/laundry`
+- `GET|POST|PUT|DELETE /api/visitors`
+- `GET|POST|PUT|DELETE /api/access-cards`
+- `GET|POST|DELETE /api/preferences`
 
 ## Database Schema
 
-The system automatically creates three tables:
+The backend automatically provisions the required schema if it does not exist:
 
-1. **students**: Stores student information
-2. **rooms**: Stores room details and capacity
-3. **allocations**: Links students to rooms with allocation dates
+1. `hostels`
+2. `mess_plans`
+3. `residents`
+4. `rooms`
+5. `allotments`
+6. `roommate_preferences`
+7. `maintenance_requests`
+8. `laundry_services`
+9. `payments`
+10. `bills`
+11. `visitor_logs`
+12. `access_cards`
+13. `mess_plan_assignments` (helper)
 
 ## Usage
 
-1. Start the MySQL server
-2. Start the backend server (`cd server && npm start`)
-3. Start the frontend (`cd client && npm start`)
-4. Open `http://localhost:3000` in your browser
-5. Navigate between Students, Rooms, and Allocations using the navigation bar
+1. Start MySQL (credentials set in `server/.env`)
+2. `cd server && npm start`
+3. `cd client && npm start`
+4. Visit `http://localhost:3000`
+5. Log in as:
+   - **Resident:** use an existing resident’s ID/email/contact number
+   - **Admin:** default `admin@hostel.com / admin123` (update via env `ADMIN_EMAIL` / `ADMIN_PASSWORD`)
 

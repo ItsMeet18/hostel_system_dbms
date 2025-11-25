@@ -1,9 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const { initializeDatabase } = require('./database');
-const studentRoutes = require('./routes/students');
+const authRoutes = require('./routes/auth');
+const residentRoutes = require('./routes/residents');
+const hostelRoutes = require('./routes/hostels');
 const roomRoutes = require('./routes/rooms');
-const allocationRoutes = require('./routes/allocations');
+const allotmentRoutes = require('./routes/allotments');
+const messPlanRoutes = require('./routes/messPlans');
+const billRoutes = require('./routes/bills');
+const paymentRoutes = require('./routes/payments');
+const maintenanceRoutes = require('./routes/maintenance');
+const laundryRoutes = require('./routes/laundry');
+const residentPortalRoutes = require('./routes/residentPortal');
+const visitorRoutes = require('./routes/visitorLogs');
+const accessCardRoutes = require('./routes/accessCards');
+const preferenceRoutes = require('./routes/preferences');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,9 +25,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/students', studentRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/residents', residentRoutes);
+app.use('/api/hostels', hostelRoutes);
 app.use('/api/rooms', roomRoutes);
-app.use('/api/allocations', allocationRoutes);
+app.use('/api/allotments', allotmentRoutes);
+app.use('/api/mess-plans', messPlanRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/laundry', laundryRoutes);
+app.use('/api/resident-portal', residentPortalRoutes);
+app.use('/api/visitors', visitorRoutes);
+app.use('/api/access-cards', accessCardRoutes);
+app.use('/api/preferences', preferenceRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

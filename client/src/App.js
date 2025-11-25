@@ -1,33 +1,56 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import Students from './components/Students';
-import Rooms from './components/Rooms';
-import Allocations from './components/Allocations';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import ResidentPortal from './components/resident/ResidentPortal';
+import AdminPortal from './components/admin/AdminPortal';
 import './App.css';
 
 function App() {
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('hostel-user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  const handleLogin = (data) => {
+    setUser(data);
+    localStorage.setItem('hostel-user', JSON.stringify(data));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('hostel-user');
+  };
+
+  const ProtectedRoute = ({ children, allowedRoles }) => {
+    if (!user || !allowedRoles.includes(user.type)) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
+  };
+
   return (
     <Router>
       <div className="App">
-        <nav className="navbar">
-          <div className="nav-container">
-            <h1 className="nav-logo">🏠 Hostel Management</h1>
-            <ul className="nav-menu">
-              <li><Link to="/students" className="nav-link">Students</Link></li>
-              <li><Link to="/rooms" className="nav-link">Rooms</Link></li>
-              <li><Link to="/allocations" className="nav-link">Allocations</Link></li>
-            </ul>
-          </div>
-        </nav>
-
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Students />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/rooms" element={<Rooms />} />
-            <Route path="/allocations" element={<Allocations />} />
-          </Routes>
-        </main>
+        <Routes>
+          <Route path="/" element={<Login user={user} onLogin={handleLogin} />} />
+          <Route
+            path="/resident"
+            element={
+              <ProtectedRoute allowedRoles={['resident']}>
+                <ResidentPortal user={user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPortal user={user} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </Router>
   );
