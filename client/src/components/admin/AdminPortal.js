@@ -42,6 +42,17 @@ const AdminPortal = ({ user, onLogout }) => {
     contact_number: '',
   });
 
+  const [newRoom, setNewRoom] = useState({
+    hostel_id: '',
+    room_number: '',
+    room_type: 'double',
+    capacity: '',
+    status: 'available',
+    roommate_type: 'quiet',
+  });
+
+  const [editingRoom, setEditingRoom] = useState(null);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -143,6 +154,60 @@ const AdminPortal = ({ user, onLogout }) => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add hostel');
     }
+  };
+
+  const handleRoomSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const roomData = {
+        ...newRoom,
+        capacity: parseInt(newRoom.capacity),
+      };
+
+      if (editingRoom) {
+        await adminAPI.rooms.update(editingRoom.room_id, roomData);
+        setSuccess('Room updated successfully!');
+      } else {
+        await adminAPI.rooms.create(roomData);
+        setSuccess('Room added successfully!');
+      }
+
+      setNewRoom({
+        hostel_id: '',
+        room_number: '',
+        room_type: 'double',
+        capacity: '',
+        status: 'available',
+      });
+      setEditingRoom(null);
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save room');
+    }
+  };
+
+  const handleEditRoom = (room) => {
+    setEditingRoom(room);
+    setNewRoom({
+      hostel_id: room.hostel_id,
+      room_number: room.room_number,
+      room_type: room.room_type,
+      capacity: room.capacity.toString(),
+      status: room.status,
+      roommate_type: room.roommate_type,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRoom(null);
+    setNewRoom({
+      hostel_id: '',
+      room_number: '',
+      room_type: 'double',
+      capacity: '',
+      status: 'available',
+      roommate_type: 'quiet',
+    });
   };
 
   if (loading) {
@@ -403,6 +468,156 @@ const AdminPortal = ({ user, onLogout }) => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">{editingRoom ? 'Update Room' : 'Add New Room'}</h3>
+          </div>
+          <form onSubmit={handleRoomSubmit}>
+            <div className="form-group">
+              <label className="form-label">Hostel</label>
+              <select
+                className="form-select"
+                value={newRoom.hostel_id}
+                onChange={(e) => setNewRoom({ ...newRoom, hostel_id: e.target.value })}
+                required
+              >
+                <option value="">Select hostel</option>
+                {hostels.map((hostel) => (
+                  <option key={hostel.hostel_id} value={hostel.hostel_id}>
+                    {hostel.hostel_name} ({hostel.location})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Room Number</label>
+              <input
+                type="text"
+                className="form-input"
+                value={newRoom.room_number}
+                onChange={(e) => setNewRoom({ ...newRoom, room_number: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Room Type</label>
+              <select
+                className="form-select"
+                value={newRoom.room_type}
+                onChange={(e) => setNewRoom({ ...newRoom, room_type: e.target.value })}
+              >
+                <option value="single">Single</option>
+                <option value="double">Double</option>
+                <option value="triple">Triple</option>
+                <option value="suite">Suite</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Capacity</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newRoom.capacity}
+                onChange={(e) => setNewRoom({ ...newRoom, capacity: e.target.value })}
+                min="1"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select
+                className="form-select"
+                value={newRoom.status}
+                onChange={(e) => setNewRoom({ ...newRoom, status: e.target.value })}
+              >
+                <option value="available">Available</option>
+                <option value="full">Full</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Roommate Type</label>
+              <select
+                className="form-select"
+                value={newRoom.roommate_type}
+                onChange={(e) => setNewRoom({ ...newRoom, roommate_type: e.target.value })}
+              >
+                <option value="quiet">Quiet</option>
+                <option value="jolly">Jolly</option>
+                <option value="morning-person">Morning Person</option>
+                <option value="night-person">Night Person</option>
+                <option value="social">Social</option>
+                <option value="studious">Studious</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">
+                {editingRoom ? 'Update Room' : 'Add Room'}
+              </button>
+              {editingRoom && (
+                <button type="button" className="btn btn-secondary" onClick={handleCancelEdit}>
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">All Rooms</h3>
+        </div>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Hostel</th>
+                <th>Room #</th>
+                <th>Type</th>
+                <th>Capacity</th>
+                <th>Occupied</th>
+                <th>Roommate Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rooms.map((room) => {
+                const hostel = hostels.find(h => h.hostel_id === room.hostel_id);
+                return (
+                  <tr key={room.room_id}>
+                    <td>{hostel?.hostel_name || 'Unknown'}</td>
+                    <td>{room.room_number}</td>
+                    <td>{room.room_type}</td>
+                    <td>{room.capacity}</td>
+                    <td>{room.occupied}</td>
+                    <td>
+                      <span className="badge badge-other">
+                        {room.roommate_type?.replace('-', ' ') || 'quiet'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${room.status === 'available' ? 'available' : room.status === 'full' ? 'full' : 'maintenance'}`}>
+                        {room.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-secondary btn-small"
+                        onClick={() => handleEditRoom(room)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 

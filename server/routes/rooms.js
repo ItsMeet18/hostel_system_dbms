@@ -39,16 +39,16 @@ router.get('/:id', async (req, res) => {
 // Create new room
 router.post('/', async (req, res) => {
   try {
-    const { hostel_id, room_number, room_type, capacity, status } = req.body;
+    const { hostel_id, room_number, room_type, capacity, status, roommate_type } = req.body;
 
     if (!hostel_id || !room_number || !capacity) {
       return res.status(400).json({ error: 'Hostel, room number and capacity are required' });
     }
 
     const [result] = await promisePool.query(
-      `INSERT INTO rooms (hostel_id, room_number, room_type, capacity, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      [hostel_id, room_number, room_type || 'double', capacity, status || 'available']
+      `INSERT INTO rooms (hostel_id, room_number, room_type, capacity, status, roommate_type)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [hostel_id, room_number, room_type || 'double', capacity, status || 'available', roommate_type || 'quiet']
     );
 
     const [room] = await promisePool.query('SELECT * FROM rooms WHERE room_id = ?', [result.insertId]);
@@ -64,11 +64,11 @@ router.post('/', async (req, res) => {
 // Update room
 router.put('/:id', async (req, res) => {
   try {
-    const { hostel_id, room_number, room_type, capacity, status, occupied } = req.body;
+    const { hostel_id, room_number, room_type, capacity, status, occupied, roommate_type } = req.body;
 
     const [result] = await promisePool.query(
-      `UPDATE rooms SET hostel_id=?, room_number=?, room_type=?, capacity=?, status=?, occupied=? WHERE room_id=?`,
-      [hostel_id, room_number, room_type, capacity, status, occupied || 0, req.params.id]
+      `UPDATE rooms SET hostel_id=?, room_number=?, room_type=?, capacity=?, status=?, occupied=?, roommate_type=? WHERE room_id=?`,
+      [hostel_id, room_number, room_type, capacity, status, occupied || 0, roommate_type || 'quiet', req.params.id]
     );
 
     if (result.affectedRows === 0) {

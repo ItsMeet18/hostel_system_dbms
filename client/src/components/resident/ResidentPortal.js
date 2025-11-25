@@ -11,6 +11,7 @@ const ResidentPortal = ({ user, onLogout }) => {
   const [success, setSuccess] = useState('');
   const [profileForm, setProfileForm] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [selectingRoom, setSelectingRoom] = useState(false);
 
   useEffect(() => {
     if (!residentId) return;
@@ -101,6 +102,22 @@ const ResidentPortal = ({ user, onLogout }) => {
     }
   };
 
+  const handleRoomSelection = async (roomId) => {
+    if (window.confirm('Are you sure you want to select this room? This action cannot be undone.')) {
+      try {
+        setSelectingRoom(true);
+        await residentPortalAPI.selectRoom(residentId, { room_id: roomId });
+        setSuccess('Room selected successfully!');
+        const response = await residentPortalAPI.getDashboard(residentId);
+        setData(response.data);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to select room');
+      } finally {
+        setSelectingRoom(false);
+      }
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading your portal...</div>;
   }
@@ -117,6 +134,7 @@ const ResidentPortal = ({ user, onLogout }) => {
     laundry,
     hostels = [],
     messPlans = [],
+    availableRooms = [],
   } = data || {};
   const roommateOptions = [
     { value: 'quiet', label: 'Quiet' },
@@ -203,6 +221,55 @@ const ResidentPortal = ({ user, onLogout }) => {
             <p className="muted">No active room allocation.</p>
           )}
         </div>
+
+        {!room && availableRooms.length > 0 && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Select Your Room</h3>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Room #</th>
+                    <th>Type</th>
+                    <th>Capacity</th>
+                    <th>Available</th>
+                    <th>Roommate Type</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {availableRooms.map((availableRoom) => (
+                    <tr key={availableRoom.room_id}>
+                      <td><strong>{availableRoom.room_number}</strong></td>
+                      <td>{availableRoom.room_type}</td>
+                      <td>{availableRoom.capacity}</td>
+                      <td>{availableRoom.capacity - availableRoom.occupied}</td>
+                      <td>
+                        <span className="badge badge-other">
+                          {availableRoom.roommate_type.replace('-', ' ')}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-primary btn-small"
+                          onClick={() => handleRoomSelection(availableRoom.room_id)}
+                          disabled={selectingRoom}
+                        >
+                          {selectingRoom ? 'Selecting...' : 'Select Room'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#666' }}>
+              <p><strong>Note:</strong> Rooms are filtered based on your roommate type preference ({resident?.roommate_type?.replace('-', ' ') || 'quiet'}).</p>
+            </div>
+          </div>
+        )}
 
         <div className="card">
           <div className="card-header">

@@ -9,6 +9,8 @@ A modern full-stack hostel management suite with dedicated **resident** and **ad
   - View personal info, mess plan, hostel & room details
   - Track recent bills, maintenance tickets, laundry history
   - Raise maintenance complaints and laundry requests
+  - Select rooms based on roommate type preferences
+  - Update profile including hostel and mess plan preferences
 - **Admin Portal**
   - Secure admin login
   - Dashboards for residents, rooms, maintenance queue, billing
@@ -96,9 +98,11 @@ The frontend will run on `http://localhost:3000`
 - `POST /api/auth/admin` – Admin login (defaults: `admin@hostel.com` / `admin123`, configurable via env)
 
 ### Resident Portal
-- `GET /api/resident-portal/:id/dashboard` – Aggregated resident info (personal, room, bills, maintenance, laundry)
+- `GET /api/resident-portal/:id/dashboard` – Aggregated resident info (personal, room, bills, maintenance, laundry, available rooms)
+- `PUT /api/resident-portal/:id/profile` – Update resident profile and preferences
 - `POST /api/resident-portal/:id/maintenance` – Raise complaint
 - `POST /api/resident-portal/:id/laundry` – Add laundry request
+- `POST /api/resident-portal/:id/room-selection` – Select and allocate a room
 
 ### Core CRUD (selection)
 - `GET|POST|PUT|DELETE /api/residents`

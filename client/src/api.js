@@ -19,6 +19,7 @@ export const residentPortalAPI = {
   createMaintenance: (residentId, data) => api.post(`/resident-portal/${residentId}/maintenance`, data),
   createLaundry: (residentId, data) => api.post(`/resident-portal/${residentId}/laundry`, data),
   updateProfile: (residentId, data) => api.put(`/resident-portal/${residentId}/profile`, data),
+  selectRoom: (residentId, data) => api.post(`/resident-portal/${residentId}/room-selection`, data),
 };
 
 export const adminAPI = {

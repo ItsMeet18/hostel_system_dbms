@@ -63,6 +63,7 @@ const createTables = [
     capacity INT NOT NULL,
     occupied INT DEFAULT 0,
     status ENUM('available', 'full', 'maintenance') DEFAULT 'available',
+    roommate_type ENUM('quiet','jolly','morning-person','night-person','social','studious','other') DEFAULT 'quiet',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_room (hostel_id, room_number),
@@ -178,6 +179,11 @@ async function initializeDatabase() {
     await ensureColumn('hostels', 'security_deposit', 'DECIMAL(10,2)');
     await ensureColumn(
       'residents',
+      'roommate_type',
+      "ENUM('quiet','jolly','morning-person','night-person','social','studious','other') DEFAULT 'quiet'"
+    );
+    await ensureColumn(
+      'rooms',
       'roommate_type',
       "ENUM('quiet','jolly','morning-person','night-person','social','studious','other') DEFAULT 'quiet'"
     );
