@@ -28,10 +28,12 @@ router.get('/:id/dashboard', async (req, res) => {
       LIMIT 1
     `, [residentId]);
 
-    const [bills, maintenance, laundry] = await Promise.all([
+    const [bills, maintenance, laundry, hostels, messPlans] = await Promise.all([
       promisePool.query('SELECT * FROM bills WHERE resident_id = ? ORDER BY due_date DESC LIMIT 5', [residentId]),
       promisePool.query('SELECT * FROM maintenance_requests WHERE resident_id = ? ORDER BY created_at DESC LIMIT 5', [residentId]),
-      promisePool.query('SELECT * FROM laundry_services WHERE resident_id = ? ORDER BY service_date DESC LIMIT 5', [residentId])
+      promisePool.query('SELECT * FROM laundry_services WHERE resident_id = ? ORDER BY service_date DESC LIMIT 5', [residentId]),
+      promisePool.query('SELECT * FROM hostels ORDER BY hostel_name'),
+      promisePool.query('SELECT * FROM mess_plans ORDER BY plan_type')
     ]);
 
     res.json({
@@ -39,8 +41,60 @@ router.get('/:id/dashboard', async (req, res) => {
       room: room.length ? room[0] : null,
       bills: bills[0],
       maintenance: maintenance[0],
-      laundry: laundry[0]
+      laundry: laundry[0],
+      hostels: hostels[0],
+      messPlans: messPlans[0]
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const residentId = req.params.id;
+    const {
+      name,
+      gender,
+      contact_number,
+      emergency_contact,
+      email,
+      hostel_id,
+      mess_plan_id,
+      roommate_type
+    } = req.body;
+
+    const [result] = await promisePool.query(
+      `UPDATE residents
+       SET name=?, gender=?, contact_number=?, emergency_contact=?, email=?, hostel_id=?, mess_plan_id=?, roommate_type=?
+       WHERE resident_id=?`,
+      [
+        name,
+        gender,
+        contact_number,
+        emergency_contact || null,
+        email || null,
+        hostel_id || null,
+        mess_plan_id || null,
+        roommate_type || 'quiet',
+        residentId
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Resident not found' });
+    }
+
+    const [updatedResident] = await promisePool.query(
+      `SELECT r.*, h.hostel_name, h.location, mp.plan_type, mp.cost
+       FROM residents r
+       LEFT JOIN hostels h ON r.hostel_id = h.hostel_id
+       LEFT JOIN mess_plans mp ON r.mess_plan_id = mp.plan_id
+       WHERE r.resident_id = ?`,
+      [residentId]
+    );
+
+    res.json(updatedResident[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

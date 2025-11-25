@@ -15,13 +15,14 @@ router.get('/', async (req, res) => {
 // Create hostel
 router.post('/', async (req, res) => {
   try {
-    const { hostel_name, location, contact_number } = req.body;
+    const { hostel_name, location, hostel_fees, annual_fees, security_deposit, contact_number } = req.body;
     if (!hostel_name || !location) {
       return res.status(400).json({ error: 'Hostel name and location are required' });
     }
     const [result] = await promisePool.query(
-      'INSERT INTO hostels (hostel_name, location, contact_number) VALUES (?, ?, ?)',
-      [hostel_name, location, contact_number || null]
+      `INSERT INTO hostels (hostel_name, location, hostel_fees, annual_fees, security_deposit, contact_number)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [hostel_name, location, hostel_fees || null, annual_fees || null, security_deposit || null, contact_number || null]
     );
     const [hostel] = await promisePool.query('SELECT * FROM hostels WHERE hostel_id = ?', [result.insertId]);
     res.status(201).json(hostel[0]);
@@ -33,10 +34,11 @@ router.post('/', async (req, res) => {
 // Update hostel
 router.put('/:id', async (req, res) => {
   try {
-    const { hostel_name, location, contact_number } = req.body;
+    const { hostel_name, location, hostel_fees, annual_fees, security_deposit, contact_number } = req.body;
     const [result] = await promisePool.query(
-      'UPDATE hostels SET hostel_name=?, location=?, contact_number=? WHERE hostel_id=?',
-      [hostel_name, location, contact_number || null, req.params.id]
+      `UPDATE hostels SET hostel_name=?, location=?, hostel_fees=?, annual_fees=?, security_deposit=?, contact_number=?
+       WHERE hostel_id=?`,
+      [hostel_name, location, hostel_fees || null, annual_fees || null, security_deposit || null, contact_number || null, req.params.id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Hostel not found' });

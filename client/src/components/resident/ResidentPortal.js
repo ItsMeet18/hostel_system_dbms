@@ -9,6 +9,8 @@ const ResidentPortal = ({ user, onLogout }) => {
   const [complaint, setComplaint] = useState('');
   const [laundryDate, setLaundryDate] = useState('');
   const [success, setSuccess] = useState('');
+  const [profileForm, setProfileForm] = useState(null);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!residentId) return;
@@ -17,6 +19,17 @@ const ResidentPortal = ({ user, onLogout }) => {
         setLoading(true);
         const response = await residentPortalAPI.getDashboard(residentId);
         setData(response.data);
+        const residentProfile = response.data.resident;
+        setProfileForm({
+          name: residentProfile?.name || '',
+          gender: residentProfile?.gender || 'male',
+          contact_number: residentProfile?.contact_number || '',
+          emergency_contact: residentProfile?.emergency_contact || '',
+          email: residentProfile?.email || '',
+          hostel_id: residentProfile?.hostel_id || '',
+          mess_plan_id: residentProfile?.mess_plan_id || '',
+          roommate_type: residentProfile?.roommate_type || 'quiet',
+        });
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to load dashboard');
       } finally {
@@ -52,6 +65,30 @@ const ResidentPortal = ({ user, onLogout }) => {
     }
   };
 
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingProfile(true);
+      setSuccess('');
+      await residentPortalAPI.updateProfile(residentId, profileForm);
+      const response = await residentPortalAPI.getDashboard(residentId);
+      setData(response.data);
+      setSuccess('Profile updated successfully!');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading your portal...</div>;
   }
@@ -60,7 +97,24 @@ const ResidentPortal = ({ user, onLogout }) => {
     return <div className="error">{error}</div>;
   }
 
-  const { resident, room, bills, maintenance, laundry } = data || {};
+  const {
+    resident,
+    room,
+    bills,
+    maintenance,
+    laundry,
+    hostels = [],
+    messPlans = [],
+  } = data || {};
+  const roommateOptions = [
+    { value: 'quiet', label: 'Quiet' },
+    { value: 'jolly', label: 'Jolly' },
+    { value: 'morning-person', label: 'Morning Person' },
+    { value: 'night-person', label: 'Night Person' },
+    { value: 'social', label: 'Social' },
+    { value: 'studious', label: 'Studious' },
+    { value: 'other', label: 'Other' },
+  ];
 
   return (
     <div className="main-content">
@@ -135,6 +189,120 @@ const ResidentPortal = ({ user, onLogout }) => {
             </div>
           ) : (
             <p className="muted">No active room allocation.</p>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Update Profile</h3>
+          </div>
+          {profileForm ? (
+            <form onSubmit={handleProfileSubmit}>
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input
+                  className="form-input"
+                  name="name"
+                  value={profileForm.name}
+                  onChange={handleProfileChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  name="email"
+                  value={profileForm.email}
+                  onChange={handleProfileChange}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Gender</label>
+                <select
+                  className="form-select"
+                  name="gender"
+                  value={profileForm.gender}
+                  onChange={handleProfileChange}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Contact Number</label>
+                <input
+                  className="form-input"
+                  name="contact_number"
+                  value={profileForm.contact_number}
+                  onChange={handleProfileChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Emergency Contact</label>
+                <input
+                  className="form-input"
+                  name="emergency_contact"
+                  value={profileForm.emergency_contact}
+                  onChange={handleProfileChange}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Preferred Hostel</label>
+                <select
+                  className="form-select"
+                  name="hostel_id"
+                  value={profileForm.hostel_id}
+                  onChange={handleProfileChange}
+                >
+                  <option value="">Select hostel</option>
+                  {hostels.map((hostel) => (
+                    <option key={hostel.hostel_id} value={hostel.hostel_id}>
+                      {hostel.hostel_name} ({hostel.location})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Mess Plan</label>
+                <select
+                  className="form-select"
+                  name="mess_plan_id"
+                  value={profileForm.mess_plan_id}
+                  onChange={handleProfileChange}
+                >
+                  <option value="">Select plan</option>
+                  {messPlans.map((plan) => (
+                    <option key={plan.plan_id} value={plan.plan_id}>
+                      {plan.plan_type} (₹{plan.cost})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Roommate Type</label>
+                <select
+                  className="form-select"
+                  name="roommate_type"
+                  value={profileForm.roommate_type}
+                  onChange={handleProfileChange}
+                >
+                  {roommateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={savingProfile}>
+                {savingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
+            </form>
+          ) : (
+            <p className="muted">Loading profile...</p>
           )}
         </div>
       </div>
@@ -251,6 +419,35 @@ const ResidentPortal = ({ user, onLogout }) => {
           ) : (
             <p className="muted">No laundry history yet.</p>
           )}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">Available Hostels</h3>
+        </div>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Fees</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hostels.map((hostel) => (
+                <tr key={hostel.hostel_id}>
+                  <td>{hostel.hostel_name}</td>
+                  <td>{hostel.location}</td>
+                  <td>
+                    ₹{hostel.hostel_fees || 0}
+                    {hostel.annual_fees ? ` • Annual ₹${hostel.annual_fees}` : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ export const residentPortalAPI = {
   getDashboard: (residentId) => api.get(`/resident-portal/${residentId}/dashboard`),
   createMaintenance: (residentId, data) => api.post(`/resident-portal/${residentId}/maintenance`, data),
   createLaundry: (residentId, data) => api.post(`/resident-portal/${residentId}/laundry`, data),
+  updateProfile: (residentId, data) => api.put(`/resident-portal/${residentId}/profile`, data),
 };
 
 export const adminAPI = {
@@ -29,6 +30,7 @@ export const adminAPI = {
   },
   hostels: {
     getAll: () => api.get('/hostels'),
+    create: (data) => api.post('/hostels', data),
   },
   rooms: {
     getAll: () => api.get('/rooms'),

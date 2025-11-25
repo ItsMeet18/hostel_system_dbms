@@ -24,6 +24,9 @@ const createTables = [
     hostel_id INT AUTO_INCREMENT PRIMARY KEY,
     hostel_name VARCHAR(100) NOT NULL,
     location VARCHAR(150) NOT NULL,
+    hostel_fees DECIMAL(10,2),
+    annual_fees DECIMAL(12,2),
+    security_deposit DECIMAL(10,2),
     contact_number VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -45,6 +48,7 @@ const createTables = [
     contact_number VARCHAR(20) NOT NULL,
     emergency_contact VARCHAR(20),
     email VARCHAR(150) UNIQUE,
+    roommate_type ENUM('quiet', 'jolly', 'morning-person', 'night-person', 'social', 'studious', 'other') DEFAULT 'quiet',
     password VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -169,11 +173,55 @@ async function initializeDatabase() {
     for (const statement of createTables) {
       await promisePool.query(statement);
     }
+    await ensureColumn('hostels', 'hostel_fees', 'DECIMAL(10,2)');
+    await ensureColumn('hostels', 'annual_fees', 'DECIMAL(12,2)');
+    await ensureColumn('hostels', 'security_deposit', 'DECIMAL(10,2)');
+    await ensureColumn(
+      'residents',
+      'roommate_type',
+      "ENUM('quiet','jolly','morning-person','night-person','social','studious','other') DEFAULT 'quiet'"
+    );
+    await seedHostels();
 
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
+  }
+}
+
+async function seedHostels() {
+  const hostels = [
+    { hostel_id: 1, name: 'Atria Hostel', location: 'Mumbai', hostel_fees: 60000, annual_fees: null, security_deposit: null },
+    { hostel_id: 2, name: 'Sunrise Hostel', location: 'Delhi', hostel_fees: 55000, annual_fees: null, security_deposit: null },
+    { hostel_id: 3, name: 'Greenfield Hostel', location: 'Bangalore', hostel_fees: 70000, annual_fees: null, security_deposit: null },
+    { hostel_id: 4, name: 'Lakeview Hostel', location: 'Chennai', hostel_fees: 65000, annual_fees: null, security_deposit: null },
+    { hostel_id: 5, name: 'City Comfort Hostel', location: 'Pune', hostel_fees: 60000, annual_fees: null, security_deposit: null },
+    { hostel_id: 6, name: 'Elite Stay Hostel', location: 'Hyderabad', hostel_fees: 80000, annual_fees: null, security_deposit: null },
+    { hostel_id: 7, name: 'Harmony Hostel', location: 'Kolkata', hostel_fees: 50000, annual_fees: null, security_deposit: null },
+    { hostel_id: 8, name: 'BlueSky Hostel', location: 'Ahmedabad', hostel_fees: 58000, annual_fees: null, security_deposit: null },
+    { hostel_id: 9, name: 'Royal Nest Hostel', location: 'Jaipur', hostel_fees: 72000, annual_fees: null, security_deposit: null },
+    { hostel_id: 10, name: 'Metro Inn Hostel', location: 'Lucknow', hostel_fees: 0, annual_fees: null, security_deposit: null },
+    { hostel_id: 11, name: 'Sunshine Hostel', location: 'Goa', hostel_fees: 45000, annual_fees: 540000, security_deposit: 4500 }
+  ];
+
+  for (const hostel of hostels) {
+    await promisePool.query(
+      `INSERT INTO hostels (hostel_id, hostel_name, location, hostel_fees, annual_fees, security_deposit)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE hostel_name = VALUES(hostel_name)`,
+      [hostel.hostel_id, hostel.name, hostel.location, hostel.hostel_fees, hostel.annual_fees, hostel.security_deposit]
+    );
+  }
+}
+
+async function ensureColumn(table, column, definition) {
+  try {
+    await promisePool.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  } catch (error) {
+    if (error.code !== 'ER_DUP_FIELDNAME') {
+      throw error;
+    }
   }
 }
 

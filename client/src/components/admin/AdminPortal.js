@@ -33,6 +33,15 @@ const AdminPortal = ({ user, onLogout }) => {
     description: '',
   });
 
+  const [newHostel, setNewHostel] = useState({
+    hostel_name: '',
+    location: '',
+    hostel_fees: '',
+    annual_fees: '',
+    security_deposit: '',
+    contact_number: '',
+  });
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -114,6 +123,25 @@ const AdminPortal = ({ user, onLogout }) => {
       fetchData();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create mess plan');
+    }
+  };
+
+  const handleHostelSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await adminAPI.hostels.create(newHostel);
+      setNewHostel({
+        hostel_name: '',
+        location: '',
+        hostel_fees: '',
+        annual_fees: '',
+        security_deposit: '',
+        contact_number: '',
+      });
+      setSuccess('Hostel added successfully!');
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add hostel');
     }
   };
 
@@ -291,6 +319,90 @@ const AdminPortal = ({ user, onLogout }) => {
               Save Bill
             </button>
           </form>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Manage Hostels</h3>
+          </div>
+          <form onSubmit={handleHostelSubmit}>
+            <div className="form-group">
+              <label className="form-label">Hostel Name</label>
+              <input
+                className="form-input"
+                value={newHostel.hostel_name}
+                onChange={(e) => setNewHostel({ ...newHostel, hostel_name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Location</label>
+              <input
+                className="form-input"
+                value={newHostel.location}
+                onChange={(e) => setNewHostel({ ...newHostel, location: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Hostel Fees</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newHostel.hostel_fees}
+                onChange={(e) => setNewHostel({ ...newHostel, hostel_fees: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Annual Fees</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newHostel.annual_fees}
+                onChange={(e) => setNewHostel({ ...newHostel, annual_fees: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Security Deposit</label>
+              <input
+                type="number"
+                className="form-input"
+                value={newHostel.security_deposit}
+                onChange={(e) => setNewHostel({ ...newHostel, security_deposit: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Contact Number</label>
+              <input
+                className="form-input"
+                value={newHostel.contact_number}
+                onChange={(e) => setNewHostel({ ...newHostel, contact_number: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary">
+              Save Hostel
+            </button>
+          </form>
+          <div className="table-container" style={{ marginTop: '1rem' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Location</th>
+                  <th>Fees</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hostels.map((hostel) => (
+                  <tr key={hostel.hostel_id}>
+                    <td>{hostel.hostel_name}</td>
+                    <td>{hostel.location}</td>
+                    <td>₹{hostel.hostel_fees || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
