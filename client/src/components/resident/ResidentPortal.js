@@ -78,9 +78,21 @@ const ResidentPortal = ({ user, onLogout }) => {
     try {
       setSavingProfile(true);
       setSuccess('');
-      await residentPortalAPI.updateProfile(residentId, profileForm);
-      const response = await residentPortalAPI.getDashboard(residentId);
-      setData(response.data);
+      const updateResponse = await residentPortalAPI.updateProfile(residentId, profileForm);
+      const dashboardResponse = await residentPortalAPI.getDashboard(residentId);
+      setData(dashboardResponse.data);
+      // Update profile form with the updated resident data
+      const updatedResident = updateResponse.data;
+      setProfileForm({
+        name: updatedResident?.name || '',
+        gender: updatedResident?.gender || 'male',
+        contact_number: updatedResident?.contact_number || '',
+        emergency_contact: updatedResident?.emergency_contact || '',
+        email: updatedResident?.email || '',
+        hostel_id: updatedResident?.hostel_id || '',
+        mess_plan_id: updatedResident?.mess_plan_id || '',
+        roommate_type: updatedResident?.roommate_type || 'quiet',
+      });
       setSuccess('Profile updated successfully!');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update profile');

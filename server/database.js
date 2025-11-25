@@ -183,6 +183,67 @@ async function initializeDatabase() {
     );
     await seedHostels();
 
+    // Create triggers to prevent negative costs and fees
+    await promisePool.query(`
+      DROP TRIGGER IF EXISTS check_mess_plan_cost_insert
+    `);
+
+    await promisePool.query(`
+      CREATE TRIGGER check_mess_plan_cost_insert
+      BEFORE INSERT ON mess_plans
+      FOR EACH ROW
+      BEGIN
+        IF NEW.cost < 0 THEN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mess Plan Cost cannot be negative';
+        END IF;
+      END
+    `);
+
+    await promisePool.query(`
+      DROP TRIGGER IF EXISTS check_mess_plan_cost_update
+    `);
+
+    await promisePool.query(`
+      CREATE TRIGGER check_mess_plan_cost_update
+      BEFORE UPDATE ON mess_plans
+      FOR EACH ROW
+      BEGIN
+        IF NEW.cost < 0 THEN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mess Plan Cost cannot be negative';
+        END IF;
+      END
+    `);
+
+    await promisePool.query(`
+      DROP TRIGGER IF EXISTS check_hostel_fees_insert
+    `);
+
+    await promisePool.query(`
+      CREATE TRIGGER check_hostel_fees_insert
+      BEFORE INSERT ON hostels
+      FOR EACH ROW
+      BEGIN
+        IF NEW.hostel_fees < 0 THEN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Hostel fees cannot be negative';
+        END IF;
+      END
+    `);
+
+    await promisePool.query(`
+      DROP TRIGGER IF EXISTS check_hostel_fees_update
+    `);
+
+    await promisePool.query(`
+      CREATE TRIGGER check_hostel_fees_update
+      BEFORE UPDATE ON hostels
+      FOR EACH ROW
+      BEGIN
+        IF NEW.hostel_fees < 0 THEN
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Hostel fees cannot be negative';
+        END IF;
+      END
+    `);
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);

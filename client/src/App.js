@@ -30,7 +30,7 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
+    <div className="App">
         <Routes>
           <Route path="/" element={<Login user={user} onLogin={handleLogin} />} />
           <Route
@@ -51,7 +51,7 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
+    </div>
     </Router>
   );
 }
