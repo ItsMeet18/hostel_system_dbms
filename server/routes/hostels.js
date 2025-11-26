@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
     const [result] = await promisePool.query(
       `INSERT INTO hostels (hostel_name, location, hostel_fees, annual_fees, security_deposit, contact_number)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [hostel_name, location, hostel_fees || null, annual_fees || null, security_deposit || null, contact_number || null]
+      [hostel_name, location, hostel_fees || null, annual_fees || null, security_deposit || null, contact_number ? parseInt(contact_number) : null]
     );
     const [hostel] = await promisePool.query('SELECT * FROM hostels WHERE hostel_id = ?', [result.insertId]);
     res.status(201).json(hostel[0]);

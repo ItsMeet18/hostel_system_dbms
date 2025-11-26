@@ -27,9 +27,11 @@ const createTables = [
     hostel_fees DECIMAL(10,2),
     annual_fees DECIMAL(12,2),
     security_deposit DECIMAL(10,2),
-    contact_number VARCHAR(20),
+    contact_number BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CHECK (hostel_name NOT REGEXP '[0-9]'),
+    CHECK (contact_number IS NULL OR contact_number > 0)
   )`,
   `CREATE TABLE IF NOT EXISTS mess_plans (
     plan_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,15 +47,18 @@ const createTables = [
     mess_plan_id INT,
     name VARCHAR(100) NOT NULL,
     gender ENUM('male', 'female', 'other') NOT NULL,
-    contact_number VARCHAR(20) NOT NULL,
-    emergency_contact VARCHAR(20),
+    contact_number BIGINT NOT NULL,
+    emergency_contact BIGINT,
     email VARCHAR(150) UNIQUE,
     roommate_type ENUM('quiet', 'jolly', 'morning-person', 'night-person', 'social', 'studious', 'other') DEFAULT 'quiet',
     password VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (hostel_id) REFERENCES hostels(hostel_id) ON DELETE SET NULL,
-    FOREIGN KEY (mess_plan_id) REFERENCES mess_plans(plan_id) ON DELETE SET NULL
+    FOREIGN KEY (mess_plan_id) REFERENCES mess_plans(plan_id) ON DELETE SET NULL,
+    CHECK (name NOT REGEXP '[0-9]'),
+    CHECK (contact_number > 0),
+    CHECK (emergency_contact IS NULL OR emergency_contact > 0)
   )`,
   `CREATE TABLE IF NOT EXISTS rooms (
     room_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -134,7 +139,8 @@ const createTables = [
     entry_time DATETIME NOT NULL,
     exit_time DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (resident_id) REFERENCES residents(resident_id) ON DELETE CASCADE
+    FOREIGN KEY (resident_id) REFERENCES residents(resident_id) ON DELETE CASCADE,
+    CHECK (visitor_name NOT REGEXP '[0-9]')
   )`,
   `CREATE TABLE IF NOT EXISTS access_cards (
     card_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -187,6 +193,32 @@ async function initializeDatabase() {
       'roommate_type',
       "ENUM('quiet','jolly','morning-person','night-person','social','studious','other') DEFAULT 'quiet'"
     );
+
+    // Update datatypes for contact numbers to BIGINT
+    try {
+      await promisePool.query('ALTER TABLE hostels MODIFY COLUMN contact_number BIGINT');
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') {
+        console.log('Hostel contact_number column already BIGINT or update failed');
+      }
+    }
+
+    try {
+      await promisePool.query('ALTER TABLE residents MODIFY COLUMN contact_number BIGINT NOT NULL');
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') {
+        console.log('Resident contact_number column already BIGINT or update failed');
+      }
+    }
+
+    try {
+      await promisePool.query('ALTER TABLE residents MODIFY COLUMN emergency_contact BIGINT');
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') {
+        console.log('Resident emergency_contact column already BIGINT or update failed');
+      }
+    }
+
     await seedHostels();
 
     // Create triggers to prevent negative costs and fees
@@ -250,7 +282,109 @@ async function initializeDatabase() {
       END
     `);
 
-    console.log('Database initialized successfully');
+    // Create useful database views
+    await promisePool.query(`
+      CREATE OR REPLACE VIEW resident_room_details AS
+      SELECT
+        r.resident_id,
+        r.name,
+        r.gender,
+        r.contact_number,
+        r.emergency_contact,
+        r.email,
+        r.roommate_type,
+        h.hostel_name,
+        h.location,
+        rm.room_number,
+        rm.room_type,
+        rm.capacity,
+        rm.roommate_type AS room_roommate_type,
+        a.check_in_date,
+        a.lifestyle_preference,
+        mp.plan_type,
+        mp.cost AS mess_cost,
+        b.monthly_rent,
+        b.additional_charges,
+        (b.monthly_rent + IFNULL(b.additional_charges, 0)) AS total_rent,
+        b.due_date,
+        b.status AS bill_status
+      FROM residents r
+      LEFT JOIN hostels h ON r.hostel_id = h.hostel_id
+      LEFT JOIN allotments a ON r.resident_id = a.resident_id AND a.status = 'active'
+      LEFT JOIN rooms rm ON a.room_id = rm.room_id
+      LEFT JOIN mess_plans mp ON r.mess_plan_id = mp.plan_id
+      LEFT JOIN bills b ON r.resident_id = b.resident_id AND b.status IN ('pending', 'overdue')
+      ORDER BY r.name
+    `);
+
+    await promisePool.query(`
+      CREATE OR REPLACE VIEW maintenance_dashboard AS
+      SELECT
+        m.request_id,
+        m.issue_description,
+        m.complaint_status,
+        m.created_at,
+        m.updated_at,
+        r.resident_id,
+        r.name AS resident_name,
+        r.contact_number,
+        h.hostel_name,
+        rm.room_number
+      FROM maintenance_requests m
+      JOIN residents r ON m.resident_id = r.resident_id
+      LEFT JOIN allotments a ON r.resident_id = a.resident_id AND a.status = 'active'
+      LEFT JOIN rooms rm ON a.room_id = rm.room_id
+      LEFT JOIN hostels h ON rm.hostel_id = h.hostel_id
+      ORDER BY m.created_at DESC
+    `);
+
+    await promisePool.query(`
+      CREATE OR REPLACE VIEW room_occupancy_view AS
+      SELECT
+        rm.room_id,
+        rm.room_number,
+        rm.room_type,
+        rm.capacity,
+        rm.occupied,
+        (rm.capacity - rm.occupied) AS available_spots,
+        rm.status AS room_status,
+        rm.roommate_type,
+        h.hostel_name,
+        h.location,
+        COUNT(a.allotment_id) AS active_allocations,
+        GROUP_CONCAT(r.name ORDER BY r.name SEPARATOR ', ') AS occupants
+      FROM rooms rm
+      JOIN hostels h ON rm.hostel_id = h.hostel_id
+      LEFT JOIN allotments a ON rm.room_id = a.room_id AND a.status = 'active'
+      LEFT JOIN residents r ON a.resident_id = r.resident_id
+      GROUP BY rm.room_id, rm.room_number, rm.room_type, rm.capacity, rm.occupied, rm.status, rm.roommate_type, h.hostel_name, h.location
+      ORDER BY h.hostel_name, rm.room_number
+    `);
+
+    await promisePool.query(`
+      CREATE OR REPLACE VIEW financial_summary AS
+      SELECT
+        r.resident_id,
+        r.name,
+        r.contact_number,
+        h.hostel_name,
+        COUNT(b.bill_id) AS total_bills,
+        SUM(b.monthly_rent) AS total_rent_amount,
+        SUM(b.additional_charges) AS total_additional_charges,
+        SUM(b.monthly_rent + IFNULL(b.additional_charges, 0)) AS total_amount_due,
+        COUNT(CASE WHEN b.status = 'paid' THEN 1 END) AS paid_bills,
+        COUNT(CASE WHEN b.status = 'pending' THEN 1 END) AS pending_bills,
+        COUNT(CASE WHEN b.status = 'overdue' THEN 1 END) AS overdue_bills,
+        SUM(CASE WHEN p.payment_status = 'completed' THEN p.amount ELSE 0 END) AS total_paid
+      FROM residents r
+      LEFT JOIN hostels h ON r.hostel_id = h.hostel_id
+      LEFT JOIN bills b ON r.resident_id = b.resident_id
+      LEFT JOIN payments p ON r.resident_id = p.resident_id
+      GROUP BY r.resident_id, r.name, r.contact_number, h.hostel_name
+      ORDER BY r.name
+    `);
+
+    console.log('Database initialized successfully with views');
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;

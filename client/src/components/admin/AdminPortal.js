@@ -52,6 +52,15 @@ const AdminPortal = ({ user, onLogout }) => {
   });
 
   const [editingRoom, setEditingRoom] = useState(null);
+  const [updatingMaintenance, setUpdatingMaintenance] = useState(null);
+  const [updatingBill, setUpdatingBill] = useState(null);
+  const [maintenanceFilter, setMaintenanceFilter] = useState('all');
+  const [reportsData, setReportsData] = useState({
+    residentDetails: [],
+    maintenanceDashboard: [],
+    roomOccupancy: [],
+    financialSummary: []
+  });
 
   const fetchData = async () => {
     try {
@@ -63,6 +72,10 @@ const AdminPortal = ({ user, onLogout }) => {
         messPlansRes,
         billsRes,
         maintenanceRes,
+        residentDetailsRes,
+        maintenanceDashboardRes,
+        roomOccupancyRes,
+        financialSummaryRes,
       ] = await Promise.all([
         adminAPI.residents.getAll(),
         adminAPI.hostels.getAll(),
@@ -70,6 +83,10 @@ const AdminPortal = ({ user, onLogout }) => {
         adminAPI.messPlans.getAll(),
         adminAPI.bills.getAll(),
         adminAPI.maintenance.getAll(),
+        adminAPI.views.getResidentRoomDetails(),
+        adminAPI.views.getMaintenanceDashboard(),
+        adminAPI.views.getRoomOccupancy(),
+        adminAPI.views.getFinancialSummary(),
       ]);
 
       setResidents(residentsRes.data);
@@ -78,6 +95,12 @@ const AdminPortal = ({ user, onLogout }) => {
       setMessPlans(messPlansRes.data);
       setBills(billsRes.data);
       setMaintenance(maintenanceRes.data);
+      setReportsData({
+        residentDetails: residentDetailsRes.data,
+        maintenanceDashboard: maintenanceDashboardRes.data,
+        roomOccupancy: roomOccupancyRes.data,
+        financialSummary: financialSummaryRes.data,
+      });
       setError('');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load admin data');
@@ -210,6 +233,39 @@ const AdminPortal = ({ user, onLogout }) => {
     });
   };
 
+  const handleMaintenanceStatusUpdate = async (requestId, newStatus) => {
+    try {
+      setUpdatingMaintenance(requestId);
+      await adminAPI.maintenance.update(requestId, { complaint_status: newStatus });
+      setSuccess('Maintenance status updated successfully!');
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update maintenance status');
+    } finally {
+      setUpdatingMaintenance(null);
+    }
+  };
+
+  const handleBillStatusUpdate = async (billId, newStatus) => {
+    try {
+      setUpdatingBill(billId);
+      await adminAPI.bills.update(billId, { status: newStatus });
+      setSuccess('Bill status updated successfully!');
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update bill status');
+    } finally {
+      setUpdatingBill(null);
+    }
+  };
+
+  const getFilteredMaintenance = () => {
+    if (maintenanceFilter === 'all') {
+      return maintenance;
+    }
+    return maintenance.filter(item => item.complaint_status === maintenanceFilter);
+  };
+
   if (loading) {
     return <div className="loading">Loading admin dashboard...</div>;
   }
@@ -288,9 +344,12 @@ const AdminPortal = ({ user, onLogout }) => {
             <div className="form-group">
               <label className="form-label">Contact</label>
               <input
+                type="tel"
                 className="form-input"
                 value={newResident.contact_number}
                 onChange={(e) => setNewResident({ ...newResident, contact_number: e.target.value })}
+                pattern="[0-9]{10,15}"
+                title="Please enter a valid phone number (10-15 digits)"
                 required
               />
             </div>
@@ -439,9 +498,12 @@ const AdminPortal = ({ user, onLogout }) => {
             <div className="form-group">
               <label className="form-label">Contact Number</label>
               <input
+                type="tel"
                 className="form-input"
                 value={newHostel.contact_number}
                 onChange={(e) => setNewHostel({ ...newHostel, contact_number: e.target.value })}
+                pattern="[0-9]{10,15}"
+                title="Please enter a valid phone number (10-15 digits)"
               />
             </div>
             <button type="submit" className="btn btn-primary">
@@ -672,7 +734,26 @@ const AdminPortal = ({ user, onLogout }) => {
 
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">Maintenance Queue</h3>
+            <div>
+              <h3 className="card-title">
+                Maintenance Requests
+                <span className="count-badge">({getFilteredMaintenance().length})</span>
+              </h3>
+              <small className="muted">Use the dropdown to update request status</small>
+            </div>
+            <div className="filter-controls">
+              <label className="filter-label">Filter by Status:</label>
+              <select
+                className="form-select form-select-small"
+                value={maintenanceFilter}
+                onChange={(e) => setMaintenanceFilter(e.target.value)}
+              >
+                <option value="all">All Requests</option>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
           </div>
           <div className="table-container">
             <table>
@@ -684,14 +765,21 @@ const AdminPortal = ({ user, onLogout }) => {
                 </tr>
               </thead>
               <tbody>
-                {maintenance.slice(0, 5).map((item) => (
+                {getFilteredMaintenance().map((item) => (
                   <tr key={item.request_id}>
                     <td>{item.resident_name}</td>
                     <td>{item.issue_description}</td>
                     <td>
-                      <span className={`badge badge-${item.complaint_status}`}>
-                        {item.complaint_status}
-                      </span>
+                      <select
+                        className="form-select form-select-small"
+                        value={item.complaint_status}
+                        onChange={(e) => handleMaintenanceStatusUpdate(item.request_id, e.target.value)}
+                        disabled={updatingMaintenance === item.request_id}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                      </select>
                     </td>
                   </tr>
                 ))}
@@ -729,10 +817,11 @@ const AdminPortal = ({ user, onLogout }) => {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Latest Bills</h3>
-        </div>
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Latest Bills</h3>
+            <small className="muted">Use the dropdown to update bill status</small>
+          </div>
         <div className="table-container">
           <table>
             <thead>
@@ -750,7 +839,16 @@ const AdminPortal = ({ user, onLogout }) => {
                   <td>{new Date(bill.due_date).toLocaleDateString()}</td>
                   <td>₹{Number(bill.monthly_rent) + Number(bill.additional_charges)}</td>
                   <td>
-                    <span className={`badge badge-${bill.status}`}>{bill.status}</span>
+                    <select
+                      className="form-select form-select-small"
+                      value={bill.status}
+                      onChange={(e) => handleBillStatusUpdate(bill.bill_id, e.target.value)}
+                      disabled={updatingBill === bill.bill_id}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
                   </td>
                 </tr>
               ))}
@@ -758,6 +856,164 @@ const AdminPortal = ({ user, onLogout }) => {
           </table>
         </div>
       </div>
+
+      {/* Reports Section */}
+      <div className="reports-section">
+        <h2 className="section-title">📊 Reports & Analytics</h2>
+
+        <div className="grid">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Resident Details Report</h3>
+              <small className="muted">Complete resident information with room and billing details</small>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Hostel</th>
+                    <th>Room</th>
+                    <th>Mess Plan</th>
+                    <th>Bill Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportsData.residentDetails.slice(0, 10).map((resident) => (
+                    <tr key={resident.resident_id}>
+                      <td>{resident.name}</td>
+                      <td>{resident.contact_number}</td>
+                      <td>{resident.hostel_name || '—'}</td>
+                      <td>{resident.room_number || '—'}</td>
+                      <td>{resident.plan_type || '—'}</td>
+                      <td>
+                        <span className={`badge badge-${resident.bill_status || 'pending'}`}>
+                          {resident.bill_status || 'No bills'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Room Occupancy Report</h3>
+              <small className="muted">Room availability and current occupancy status</small>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Hostel</th>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>Capacity</th>
+                    <th>Occupied</th>
+                    <th>Available</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportsData.roomOccupancy.slice(0, 10).map((room) => (
+                    <tr key={room.room_id}>
+                      <td>{room.hostel_name}</td>
+                      <td>{room.room_number}</td>
+                      <td>{room.room_type}</td>
+                      <td>{room.capacity}</td>
+                      <td>{room.occupied}</td>
+                      <td>{room.available_spots}</td>
+                      <td>
+                        <span className={`badge badge-${room.room_status === 'available' ? 'available' : room.room_status === 'full' ? 'full' : 'maintenance'}`}>
+                          {room.room_status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Financial Summary Report</h3>
+              <small className="muted">Resident payment and billing overview</small>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Hostel</th>
+                    <th>Total Bills</th>
+                    <th>Amount Due</th>
+                    <th>Amount Paid</th>
+                    <th>Pending Bills</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportsData.financialSummary.slice(0, 10).map((summary) => (
+                    <tr key={summary.resident_id}>
+                      <td>{summary.name}</td>
+                      <td>{summary.hostel_name || '—'}</td>
+                      <td>{summary.total_bills}</td>
+                      <td>₹{summary.total_amount_due || 0}</td>
+                      <td>₹{summary.total_paid || 0}</td>
+                      <td>
+                        <span className={`badge badge-${summary.pending_bills > 0 ? 'pending' : 'paid'}`}>
+                          {summary.pending_bills}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Maintenance Overview</h3>
+              <small className="muted">Maintenance requests with resident and location details</small>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Resident</th>
+                    <th>Issue</th>
+                    <th>Room</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportsData.maintenanceDashboard.slice(0, 10).map((request) => (
+                    <tr key={request.request_id}>
+                      <td>{request.resident_name}</td>
+                      <td>{request.issue_description.substring(0, 30)}...</td>
+                      <td>{request.room_number || '—'}</td>
+                      <td>
+                        <span className={`badge badge-${request.complaint_status}`}>
+                          {request.complaint_status}
+                        </span>
+                      </td>
+                      <td>{new Date(request.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

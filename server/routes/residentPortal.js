@@ -81,8 +81,8 @@ router.put('/:id/profile', async (req, res) => {
       [
         name,
         gender,
-        contact_number,
-        emergency_contact || null,
+        parseInt(contact_number) || null,
+        emergency_contact ? parseInt(emergency_contact) : null,
         email || null,
         hostel_id || null,
         mess_plan_id || null,

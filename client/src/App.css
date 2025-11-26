@@ -378,6 +378,54 @@ tr:hover {
   gap: 0.5rem;
 }
 
+/* Small Form Select */
+.form-select-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  min-width: 120px;
+}
+
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* Count Badge */
+.count-badge {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Reports Section */
+.reports-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .nav-container {

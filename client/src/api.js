@@ -50,9 +50,17 @@ export const adminAPI = {
   bills: {
     getAll: () => api.get('/bills'),
     create: (data) => api.post('/bills', data),
+    update: (id, data) => api.put(`/bills/${id}`, data),
   },
   maintenance: {
     getAll: () => api.get('/maintenance'),
+    update: (id, data) => api.put(`/maintenance/${id}`, data),
+  },
+  views: {
+    getResidentRoomDetails: () => api.get('/views/resident-room-details'),
+    getMaintenanceDashboard: () => api.get('/views/maintenance-dashboard'),
+    getRoomOccupancy: () => api.get('/views/room-occupancy'),
+    getFinancialSummary: () => api.get('/views/financial-summary'),
   },
   laundry: {
     getAll: () => api.get('/laundry'),

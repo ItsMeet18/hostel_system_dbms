@@ -15,6 +15,7 @@ const residentPortalRoutes = require('./routes/residentPortal');
 const visitorRoutes = require('./routes/visitorLogs');
 const accessCardRoutes = require('./routes/accessCards');
 const preferenceRoutes = require('./routes/preferences');
+const viewsRoutes = require('./routes/views');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,6 +40,7 @@ app.use('/api/resident-portal', residentPortalRoutes);
 app.use('/api/visitors', visitorRoutes);
 app.use('/api/access-cards', accessCardRoutes);
 app.use('/api/preferences', preferenceRoutes);
+app.use('/api/views', viewsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

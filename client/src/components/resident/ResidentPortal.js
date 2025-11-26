@@ -313,20 +313,26 @@ const ResidentPortal = ({ user, onLogout }) => {
               <div className="form-group">
                 <label className="form-label">Contact Number</label>
                 <input
+                  type="tel"
                   className="form-input"
                   name="contact_number"
                   value={profileForm.contact_number}
                   onChange={handleProfileChange}
+                  pattern="[0-9]{10,15}"
+                  title="Please enter a valid phone number (10-15 digits)"
                   required
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Emergency Contact</label>
                 <input
+                  type="tel"
                   className="form-input"
                   name="emergency_contact"
                   value={profileForm.emergency_contact}
                   onChange={handleProfileChange}
+                  pattern="[0-9]{10,15}"
+                  title="Please enter a valid phone number (10-15 digits)"
                 />
               </div>
               <div className="form-group">

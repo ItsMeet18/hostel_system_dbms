@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
     const [result] = await promisePool.query(
       `INSERT INTO residents (name, gender, contact_number, emergency_contact, email, password, hostel_id, mess_plan_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, gender, contact_number, emergency_contact || null, email || null, password || null, hostel_id || null, mess_plan_id || null]
+      [name, gender, parseInt(contact_number) || null, emergency_contact ? parseInt(emergency_contact) : null, email || null, password || null, hostel_id || null, mess_plan_id || null]
     );
 
     const [resident] = await promisePool.query('SELECT * FROM residents WHERE resident_id = ?', [result.insertId]);
@@ -68,7 +68,7 @@ router.put('/:id', async (req, res) => {
     const [result] = await promisePool.query(
       `UPDATE residents SET name=?, gender=?, contact_number=?, emergency_contact=?, email=?, password=?, hostel_id=?, mess_plan_id=?
        WHERE resident_id=?`,
-      [name, gender, contact_number, emergency_contact || null, email || null, password || null, hostel_id || null, mess_plan_id || null, req.params.id]
+      [name, gender, parseInt(contact_number) || null, emergency_contact ? parseInt(emergency_contact) : null, email || null, password || null, hostel_id || null, mess_plan_id || null, req.params.id]
     );
 
     if (result.affectedRows === 0) {

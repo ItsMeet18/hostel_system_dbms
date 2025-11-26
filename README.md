@@ -13,8 +13,9 @@ A modern full-stack hostel management suite with dedicated **resident** and **ad
   - Update profile including hostel and mess plan preferences
 - **Admin Portal**
   - Secure admin login
-  - Dashboards for residents, rooms, maintenance queue, billing
+  - Dashboards for residents, rooms, maintenance queue with status filtering, billing with status updates
   - Add residents, rooms, bills, mess plans, and manage all master tables
+  - Reports & Analytics: Resident details, room occupancy, financial summaries, maintenance overview
   - Visibility over all maintenance, laundry, visitor logs, access cards (API ready)
 - **Backend**
   - Node.js + Express REST API
@@ -112,11 +113,20 @@ The frontend will run on `http://localhost:3000`
 - `GET|POST|PUT|DELETE /api/mess-plans`
 - `GET|POST|PUT|DELETE /api/bills`
 - `GET|POST|PUT|DELETE /api/payments`
-- `GET|POST|PUT|DELETE /api/maintenance`
+- `GET /api/maintenance` – Get all maintenance requests
+- `POST /api/maintenance` – Create maintenance request
+- `PUT /api/maintenance/:id` – Update maintenance request status
+- `DELETE /api/maintenance/:id` – Delete maintenance request
 - `GET|POST|PUT|DELETE /api/laundry`
 - `GET|POST|PUT|DELETE /api/visitors`
 - `GET|POST|PUT|DELETE /api/access-cards`
 - `GET|POST|DELETE /api/preferences`
+
+### Database Views
+- `GET /api/views/resident-room-details` – Comprehensive resident information report
+- `GET /api/views/maintenance-dashboard` – Maintenance requests with location details
+- `GET /api/views/room-occupancy` – Room availability and occupancy report
+- `GET /api/views/financial-summary` – Resident financial overview report
 
 ## Database Schema
 
@@ -140,6 +150,12 @@ The backend automatically provisions the required schema if it does not exist:
 11. `payments` - Payment transaction records
 12. `bills` - Monthly billing with rent and additional charges
 13. `mess_plan_assignments` - Links residents to mess plans over time
+
+### Database Views (Auto-created)
+- `resident_room_details` - Combined resident info with current room allocation, hostel, and billing details
+- `maintenance_dashboard` - Maintenance requests with resident and location information
+- `room_occupancy_view` - Room availability, occupancy status, and current occupants
+- `financial_summary` - Resident financial overview with billing and payment history
 
 ### Database Triggers
 - `check_mess_plan_cost_insert/update` - Prevents negative mess plan costs
